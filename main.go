@@ -29,6 +29,7 @@ func main() {
 	}
 
 	router.Get("/", handlers.Home)
+	router.Post("/users", handlers.CreateUser)
 
 	log.Printf("Server is started on PORT:%v", PORT)
 	http.ListenAndServe(fmt.Sprintf(":%s", PORT), router)
