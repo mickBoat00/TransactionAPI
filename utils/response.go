@@ -4,7 +4,19 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/mickBoat00/TransactionAPI/models"
 )
+
+func RespondWithError(w http.ResponseWriter, code int, errorMessage string) {
+
+	if code > 499 {
+		log.Println("Responding with error code 5XX.")
+	}
+
+	RespondWithJson(w, code, models.ErrorJsonParams{Error: errorMessage})
+
+}
 
 func RespondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 

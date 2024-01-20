@@ -1,5 +1,23 @@
 basePath: /api/v1
 definitions:
+  models.Currency:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.ErrorJsonParams:
+    properties:
+      error:
+        type: string
+    type: object
   models.UserRequestParams:
     properties:
       email:
@@ -20,6 +38,61 @@ info:
   title: Transaction API
   version: "1.0"
 paths:
+  /currencies/:
+    get:
+      consumes:
+      - application/json
+      description: get currencies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Currency'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      summary: List currencies
+      tags:
+      - currencies
+  /login/:
+    post:
+      consumes:
+      - application/json
+      description: Generate jwt token for user
+      parameters:
+      - description: Login User
+        in: body
+        name: User
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserRequestParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponseParams'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      summary: Generate jwt token
+      tags:
+      - Auth
   /users/:
     post:
       consumes:
@@ -39,6 +112,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.UserResponseParams'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
       summary: Create a user
       tags:
       - Auth

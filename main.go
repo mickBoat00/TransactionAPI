@@ -79,6 +79,10 @@ func main() {
 
 	v1Router.Get("/", handlers.Home)
 	v1Router.Post("/users/", serverCfg.CreateUser)
+	v1Router.Post("/login/", serverCfg.LoginUser)
+
+	v1Router.Get("/currencies/", serverCfg.ListCurrencies)
+
 	v1Router.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8000/docs/swagger.yaml"), //The url pointing to API definition
 	))

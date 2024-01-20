@@ -8,3 +8,7 @@ type UserRequestParams struct {
 type UserResponseParams struct {
 	Token string `json:"token"`
 }
+
+type ErrorJsonParams struct {
+	Error string `json:"error"`
+}
