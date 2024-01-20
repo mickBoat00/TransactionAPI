@@ -1,4 +1,4 @@
-FROM golang-sql-goose:latest
+FROM golang-sqlc-goose:latest
 
 WORKDIR /usr/src/app
 

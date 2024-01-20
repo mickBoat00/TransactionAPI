@@ -27,6 +27,16 @@ func createJwtToken(user_claim map[string]interface{}) (string, error) {
 	return tokenString, err
 }
 
+// CreateUser godoc
+//
+//	@Summary		Create a user
+//	@Description	create by json User
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			User	body		models.UserRequestParams	true	"Add User"
+//	@Success		200		{object}	models.UserResponseParams
+//	@Router			/users/ [post]
 func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
