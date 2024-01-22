@@ -1,5 +1,18 @@
 basePath: /api/v1
 definitions:
+  models.Category:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   models.Currency:
     properties:
       code:
@@ -38,6 +51,31 @@ info:
   title: Transaction API
   version: "1.0"
 paths:
+  /categories/:
+    get:
+      consumes:
+      - application/json
+      description: get user categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      summary: List categories
+      tags:
+      - Category
   /currencies/:
     get:
       consumes:
@@ -62,7 +100,7 @@ paths:
             $ref: '#/definitions/models.ErrorJsonParams'
       summary: List currencies
       tags:
-      - currencies
+      - Currency
   /login/:
     post:
       consumes:

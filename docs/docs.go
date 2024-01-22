@@ -16,6 +16,44 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/categories/": {
+            "get": {
+                "description": "get user categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category"
+                ],
+                "summary": "List categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Category"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorJsonParams"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorJsonParams"
+                        }
+                    }
+                }
+            }
+        },
         "/currencies/": {
             "get": {
                 "description": "get currencies",
@@ -26,7 +64,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "currencies"
+                    "Currency"
                 ],
                 "summary": "List currencies",
                 "responses": {
@@ -154,6 +192,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Category": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Currency": {
             "type": "object",
             "properties": {
