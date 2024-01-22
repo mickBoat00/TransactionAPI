@@ -28,7 +28,9 @@ import (
 //	@host		localhost:8000
 //	@BasePath	/api/v1
 
-//	@securityDefinitions.basic	BasicAuth
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						Authorization
 
 func main() {
 
@@ -83,10 +85,11 @@ func main() {
 
 	v1Router.Get("/currencies/", serverCfg.ListCurrencies)
 
-	v1Router.Get("/categories/", serverCfg.ListCategories)
+	v1Router.Get("/categories/", handlers.AuthMiddleware(serverCfg.ListCategories))
+	v1Router.Post("/categories/", handlers.AuthMiddleware(serverCfg.CreateCategory))
 
 	v1Router.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/docs/swagger.yaml"), //The url pointing to API definition
+		httpSwagger.URL("http://localhost:8000/docs/swagger.json"), //The url pointing to API definition
 	))
 
 	workDir, err := os.Getwd()

@@ -13,6 +13,11 @@ definitions:
       user_id:
         type: string
     type: object
+  models.CategoryRequestParams:
+    properties:
+      name:
+        type: string
+    type: object
   models.Currency:
     properties:
       code:
@@ -73,7 +78,40 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
       summary: List categories
+      tags:
+      - Category
+    post:
+      consumes:
+      - application/json
+      description: create by json Category
+      parameters:
+      - description: Add Category
+        in: body
+        name: Category
+        required: true
+        schema:
+          $ref: '#/definitions/models.CategoryRequestParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a category
       tags:
       - Category
   /currencies/:
@@ -154,10 +192,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/models.ErrorJsonParams'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.ErrorJsonParams'
         "500":
           description: Internal Server Error
           schema:
@@ -166,6 +200,8 @@ paths:
       tags:
       - Auth
 securityDefinitions:
-  BasicAuth:
-    type: basic
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

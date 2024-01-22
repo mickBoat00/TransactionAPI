@@ -42,7 +42,6 @@ func createJwtToken(user_claim map[string]interface{}) (string, error) {
 //	@Param			User	body		models.UserRequestParams	true	"Add User"
 //	@Success		200		{object}	models.UserResponseParams
 //	@Failure		400	{object}	models.ErrorJsonParams
-//	@Failure		404	{object}	models.ErrorJsonParams
 //	@Failure		500	{object}	models.ErrorJsonParams
 //	@Router			/users/ [post]
 func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request) {

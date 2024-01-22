@@ -7,6 +7,10 @@ import (
 	"github.com/mickBoat00/TransactionAPI/sql/database"
 )
 
+type CategoryRequestParams struct {
+	Name string `json:"name"`
+}
+
 type Category struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -15,7 +19,7 @@ type Category struct {
 	Updatedat time.Time `json:"updated_at"`
 }
 
-func databaseCategoryToCategory(category database.Category) Category {
+func DatabaseCategoryToCategory(category database.Category) Category {
 	return Category{
 		ID:        category.ID,
 		Name:      category.Name,
@@ -29,7 +33,7 @@ func DatabaseCategoriesToCategories(categories []database.Category) []Category {
 	categorySlice := make([]Category, 0)
 
 	for _, category := range categories {
-		categorySlice = append(categorySlice, databaseCategoryToCategory(category))
+		categorySlice = append(categorySlice, DatabaseCategoryToCategory(category))
 	}
 
 	return categorySlice
