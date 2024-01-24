@@ -114,6 +114,73 @@ paths:
       summary: Create a category
       tags:
       - Category
+  /categories/{uuid}/:
+    delete:
+      consumes:
+      - application/json
+      description: Delete by category UUID
+      parameters:
+      - description: Category UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a category
+      tags:
+      - Category
+    put:
+      consumes:
+      - application/json
+      description: Update by category UUID
+      parameters:
+      - description: Category UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Add Category
+        in: body
+        name: Category
+        required: true
+        schema:
+          $ref: '#/definitions/models.CategoryRequestParams'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
+      summary: Update a category
+      tags:
+      - Category
   /currencies/:
     get:
       consumes:

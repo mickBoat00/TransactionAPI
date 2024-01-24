@@ -45,6 +45,20 @@ func (q *Queries) CreateUserCategory(ctx context.Context, arg CreateUserCategory
 	return i, err
 }
 
+const deleteUserCategories = `-- name: DeleteUserCategories :exec
+DELETE FROM categories WHERE id = $1 AND user_id = $2
+`
+
+type DeleteUserCategoriesParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteUserCategories(ctx context.Context, arg DeleteUserCategoriesParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserCategories, arg.ID, arg.UserID)
+	return err
+}
+
 const getUserCategories = `-- name: GetUserCategories :many
 SELECT id, name, user_id, createdat, updatedat FROM categories WHERE user_id = $1
 `
@@ -76,4 +90,56 @@ func (q *Queries) GetUserCategories(ctx context.Context, userID uuid.UUID) ([]Ca
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserCategoryIds = `-- name: GetUserCategoryIds :many
+SELECT id FROM categories WHERE user_id = $1
+`
+
+func (q *Queries) GetUserCategoryIds(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getUserCategoryIds, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUserCategory = `-- name: UpdateUserCategory :one
+UPDATE categories SET name = $1 , updatedAt = $2
+WHERE user_id = $3
+RETURNING id, name, user_id, createdat, updatedat
+`
+
+type UpdateUserCategoryParams struct {
+	Name      string
+	Updatedat time.Time
+	UserID    uuid.UUID
+}
+
+func (q *Queries) UpdateUserCategory(ctx context.Context, arg UpdateUserCategoryParams) (Category, error) {
+	row := q.db.QueryRowContext(ctx, updateUserCategory, arg.Name, arg.Updatedat, arg.UserID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.UserID,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
 }

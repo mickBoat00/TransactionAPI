@@ -87,9 +87,11 @@ func main() {
 
 	v1Router.Get("/categories/", handlers.AuthMiddleware(serverCfg.ListCategories))
 	v1Router.Post("/categories/", handlers.AuthMiddleware(serverCfg.CreateCategory))
+	v1Router.Put("/categories/{id}/", handlers.AuthMiddleware(serverCfg.UpdateCategory))
+	v1Router.Delete("/categories/{id}/", handlers.AuthMiddleware(serverCfg.DeleteCategory))
 
 	v1Router.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/docs/swagger.json"), //The url pointing to API definition
+		httpSwagger.URL("http://localhost:8000/docs/swagger.json"),
 	))
 
 	workDir, err := os.Getwd()
