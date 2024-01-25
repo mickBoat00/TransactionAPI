@@ -297,9 +297,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/": {
+        "/signup/": {
             "post": {
-                "description": "create by json User",
+                "description": "create a new user",
                 "consumes": [
                     "application/json"
                 ],
@@ -309,7 +309,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Create a user",
+                "summary": "Sign up",
                 "parameters": [
                     {
                         "description": "Add User",

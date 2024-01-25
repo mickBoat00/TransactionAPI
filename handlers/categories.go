@@ -14,6 +14,30 @@ import (
 	"github.com/mickBoat00/TransactionAPI/utils"
 )
 
+func decodeCategoryRequestBody(w http.ResponseWriter, r *http.Request, model models.CategoryRequestParams) models.CategoryRequestParams {
+	decoder := json.NewDecoder(r.Body)
+
+	params := model
+
+	err := decoder.Decode(&params)
+
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+
+	return params
+}
+
+func (serverCfg *ServerConfig) checkCategoriesPermissions(w http.ResponseWriter, r *http.Request, user_id uuid.UUID, category_uuid uuid.UUID) {
+
+	userCategoriesIds, err := serverCfg.DB.GetUserCategoryIds(r.Context(), user_id)
+
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+
+	if !slices.Contains(userCategoriesIds, category_uuid) {
+		utils.IfErrorRespondWithErrorJson(w, "Permission Denied", http.StatusForbidden, "Permission Denied")
+	}
+
+}
+
 // ListCategories godoc
 //
 //	@Summary		List categories
@@ -30,10 +54,7 @@ func (serverCfg *ServerConfig) ListCategories(w http.ResponseWriter, r *http.Req
 
 	categories, err := serverCfg.DB.GetUserCategories(r.Context(), user_id)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
 	utils.RespondWithJson(w, http.StatusOK, models.DatabaseCategoriesToCategories(categories))
 
@@ -54,16 +75,7 @@ func (serverCfg *ServerConfig) ListCategories(w http.ResponseWriter, r *http.Req
 //	@Router			/categories/ [post]
 func (serverCfg *ServerConfig) CreateCategory(w http.ResponseWriter, r *http.Request, user_id uuid.UUID) {
 
-	decoder := json.NewDecoder(r.Body)
-
-	params := models.CategoryRequestParams{}
-
-	err := decoder.Decode(&params)
-
-	if err != nil || params.Name == "" {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	params := decodeCategoryRequestBody(w, r, models.CategoryRequestParams{})
 
 	category, err := serverCfg.DB.CreateUserCategory(r.Context(), database.CreateUserCategoryParams{
 		ID:        uuid.New(),
@@ -73,10 +85,7 @@ func (serverCfg *ServerConfig) CreateCategory(w http.ResponseWriter, r *http.Req
 		Updatedat: time.Now(),
 	})
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
 	utils.RespondWithJson(w, http.StatusOK, models.DatabaseCategoryToCategory(category))
 
@@ -102,31 +111,14 @@ func (serverCfg *ServerConfig) UpdateCategory(w http.ResponseWriter, r *http.Req
 
 	category_uuid, err := uuid.Parse(category_id)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
-	userCategoriesIds, err := serverCfg.DB.GetUserCategoryIds(r.Context(), user_id)
+	serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	params := decodeCategoryRequestBody(w, r, models.CategoryRequestParams{})
 
-	if !slices.Contains(userCategoriesIds, category_uuid) {
-		utils.RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Permission Denied"))
-		return
-	}
-
-	decoder := json.NewDecoder(r.Body)
-
-	params := models.CategoryRequestParams{}
-
-	params_err := decoder.Decode(&params)
-
-	if params_err != nil || params.Name == "" {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if params.Name == "" {
+		utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 		return
 	}
 
@@ -137,7 +129,7 @@ func (serverCfg *ServerConfig) UpdateCategory(w http.ResponseWriter, r *http.Req
 	})
 
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+		utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 		return
 	}
 
@@ -164,32 +156,16 @@ func (serverCfg *ServerConfig) DeleteCategory(w http.ResponseWriter, r *http.Req
 
 	category_uuid, err := uuid.Parse(category_id)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
-	category_ids, err := serverCfg.DB.GetUserCategoryIds(r.Context(), user_id)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
-
-	if !slices.Contains(category_ids, category_uuid) {
-		utils.RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Permission Denied"))
-		return
-	}
+	serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid)
 
 	db_err := serverCfg.DB.DeleteUserCategories(r.Context(), database.DeleteUserCategoriesParams{
 		ID:     category_uuid,
 		UserID: user_id,
 	})
 
-	if db_err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, db_err, http.StatusBadRequest, fmt.Sprintf("%s", err))
 
 	utils.RespondWithJson(w, http.StatusNoContent, struct{}{})
 

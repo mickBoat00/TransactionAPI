@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -32,10 +33,22 @@ func createJwtToken(user_claim map[string]interface{}) (string, error) {
 	return tokenString, err
 }
 
+func decodeUserRequestBody(w http.ResponseWriter, r *http.Request, model models.UserRequestParams) models.UserRequestParams {
+	decoder := json.NewDecoder(r.Body)
+
+	params := model
+
+	err := decoder.Decode(&params)
+
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+
+	return params
+}
+
 // CreateUser godoc
 //
-//	@Summary		Create a user
-//	@Description	create by json User
+//	@Summary		Sign up
+//	@Description	create a new user
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
@@ -43,24 +56,14 @@ func createJwtToken(user_claim map[string]interface{}) (string, error) {
 //	@Success		200		{object}	models.UserResponseParams
 //	@Failure		400	{object}	models.ErrorJsonParams
 //	@Failure		500	{object}	models.ErrorJsonParams
-//	@Router			/users/ [post]
+//	@Router			/signup/ [post]
 func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 
-	decoder := json.NewDecoder(r.Body)
-
-	params := models.UserRequestParams{}
-
-	err := decoder.Decode(&params)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	params := decodeUserRequestBody(w, r, models.UserRequestParams{})
 
 	passwordHashed, err := hashPassword(params.Password)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
 		return
 	}
 
@@ -75,15 +78,13 @@ func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request
 		},
 	)
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
 		return
 	}
 
 	token, err := createJwtToken(map[string]interface{}{"id": user.ID, "email": user.Email})
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
 		return
 	}
 
@@ -106,39 +107,27 @@ func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request
 //	@Router			/login/ [post]
 func (serverCfg *ServerConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 
-	decoder := json.NewDecoder(r.Body)
-
-	params := models.UserRequestParams{}
-
-	err := decoder.Decode(&params)
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
-
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	params := decodeUserRequestBody(w, r, models.UserRequestParams{})
 
 	user, err := serverCfg.DB.GetUserViaEmail(r.Context(), params.Email)
-	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentails.")
+
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusBadRequest, "Invalid credentails.") {
 		return
 	}
 
 	validPassword := checkPassword(user.Password, params.Password)
 
 	if !validPassword {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentails")
-		return
+		if utils.IfErrorRespondWithErrorJson(w, "Invalid credentails.", http.StatusBadRequest, "Invalid credentails. password") {
+			return
+		}
 	}
+
+	log.Print("end?   ")
 
 	token, err := createJwtToken(map[string]interface{}{"id": user.ID, "email": user.Email})
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
 		return
 	}
 

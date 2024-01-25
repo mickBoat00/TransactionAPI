@@ -34,33 +34,13 @@ import (
 
 func main() {
 
-	err := godotenv.Load(".env")
+	requiredEnvironmentVariables := [3]string{"PORT", "DATABASE_URL", "JWT_SECRET_KEY"}
 
-	if err != nil {
-		log.Fatalf("Error: %s", err)
-	}
+	envs := getRequiredEnvironmentVariables(".env", requiredEnvironmentVariables)
 
-	PORT := os.Getenv("PORT")
+	conn, err := sql.Open("postgres", envs["DATABASE_URL"])
 
-	if PORT == "" {
-		log.Fatal("Environment variable PORT is missing.")
-	}
-
-	databaseUrl := os.Getenv("DATABASE_URL")
-	if databaseUrl == "" {
-		log.Fatal("Cannot load database connection")
-	}
-
-	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
-	if jwtSecretKey == "" {
-		log.Fatal("Cannot load jwt secret")
-	}
-
-	conn, err := sql.Open("postgres", databaseUrl)
-
-	if err != nil {
-		log.Fatalf("Cannot connect to database %s", err)
-	}
+	errorMessage(err)
 
 	serverCfg := &handlers.ServerConfig{DB: database.New(conn)}
 
@@ -75,12 +55,14 @@ func main() {
 	}))
 
 	router.Use(middleware.Logger)
-	router.Use(jwtauth.Verifier(jwtauth.New("HS256", []byte(jwtSecretKey), nil)))
+	router.Use(jwtauth.Verifier(jwtauth.New("HS256", []byte(envs["JWT_SECRET_KEY"]), nil)))
 
 	v1Router := chi.NewRouter()
 
-	v1Router.Get("/", handlers.Home)
-	v1Router.Post("/users/", serverCfg.CreateUser)
+	v1Router.Get("/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/docs/swagger.yaml"),
+	))
+	v1Router.Post("/signup/", serverCfg.CreateUser)
 	v1Router.Post("/login/", serverCfg.LoginUser)
 
 	v1Router.Get("/currencies/", serverCfg.ListCurrencies)
@@ -90,14 +72,8 @@ func main() {
 	v1Router.Put("/categories/{id}/", handlers.AuthMiddleware(serverCfg.UpdateCategory))
 	v1Router.Delete("/categories/{id}/", handlers.AuthMiddleware(serverCfg.DeleteCategory))
 
-	v1Router.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/docs/swagger.json"),
-	))
-
 	workDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	errorMessage(err)
 
 	filesDir := http.Dir(filepath.Join(workDir, "docs"))
 
@@ -105,6 +81,36 @@ func main() {
 
 	router.Mount("/api/v1", v1Router)
 
-	log.Printf("Server is started on PORT:%v", PORT)
-	http.ListenAndServe(fmt.Sprintf(":%s", PORT), router)
+	log.Printf("Server is started on PORT:%v", envs["PORT"])
+	http.ListenAndServe(fmt.Sprintf(":%s", envs["PORT"]), router)
+}
+
+func getRequiredEnvironmentVariables(envs_file_name string, envs [3]string) map[string]string {
+
+	environments := make(map[string]string)
+
+	err := godotenv.Load(envs_file_name)
+
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	for _, env := range envs {
+		value := os.Getenv(env)
+		if value == "" {
+			log.Fatal("Cannot load environment variable ", env)
+		}
+		environments[env] = value
+
+	}
+
+	return environments
+
+}
+
+func errorMessage(err interface{}) {
+	switch err.(type) {
+	case string:
+		log.Fatalf("Error: %s", err)
+	}
 }

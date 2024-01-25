@@ -23,10 +23,7 @@ func (serverCfg *ServerConfig) ListCurrencies(w http.ResponseWriter, r *http.Req
 
 	currencies, err := serverCfg.DB.GetAllCurrencies(r.Context())
 
-	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-		return
-	}
+	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
 	utils.RespondWithJson(w, http.StatusOK, models.DatabaseCurrenciesToCurrencies(currencies))
 

@@ -8,13 +8,21 @@ import (
 	"github.com/mickBoat00/TransactionAPI/models"
 )
 
-func RespondWithError(w http.ResponseWriter, code int, errorMessage string) {
+func IfErrorRespondWithErrorJson(w http.ResponseWriter, err interface{}, code int, errorMessage string) bool {
 
-	if code > 499 {
-		log.Println("Responding with error code 5XX.")
+	errorFound := false
+
+	if err != nil {
+		if code > 499 {
+			log.Println("Responding with error code ", code)
+		}
+
+		RespondWithJson(w, code, models.ErrorJsonParams{Error: errorMessage})
+		errorFound = true
+
 	}
 
-	RespondWithJson(w, code, models.ErrorJsonParams{Error: errorMessage})
+	return errorFound
 
 }
 
