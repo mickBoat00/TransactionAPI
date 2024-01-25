@@ -15,11 +15,15 @@ func AuthMiddleware(handler func(w http.ResponseWriter, r *http.Request, user_id
 
 		_, claims, err := jwtauth.FromContext(r.Context())
 
-		utils.IfErrorRespondWithErrorJson(w, err, http.StatusForbidden, fmt.Sprintf("%s", err))
+		if utils.IfErrorRespondWithErrorJson(w, err, http.StatusForbidden, fmt.Sprintf("%s", err)) {
+			return
+		}
 
 		user_id, err := uuid.Parse(claims["id"].(string))
 
-		utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+		if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
+			return
+		}
 
 		handler(w, r, user_id)
 

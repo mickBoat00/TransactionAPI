@@ -3,12 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/mickBoat00/TransactionAPI/models"
 	"github.com/mickBoat00/TransactionAPI/sql/database"
@@ -45,6 +45,26 @@ func decodeUserRequestBody(w http.ResponseWriter, r *http.Request, model models.
 	return params
 }
 
+func validUserRequestBody(w http.ResponseWriter, params models.UserRequestParams) bool {
+
+	validate := validator.New()
+	err := validate.Struct(params)
+
+	if err != nil {
+		errorText := ""
+
+		for _, err := range err.(validator.ValidationErrors) {
+			errorText = errorText + fmt.Sprintf("Field: %s, Error: %s. ", err.Field(), err.ActualTag())
+		}
+
+		utils.IfErrorRespondWithErrorJson(w, err, http.StatusBadRequest, errorText)
+
+	}
+
+	return err == nil
+
+}
+
 // CreateUser godoc
 //
 //	@Summary		Sign up
@@ -60,6 +80,10 @@ func decodeUserRequestBody(w http.ResponseWriter, r *http.Request, model models.
 func (serverCfg *ServerConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	params := decodeUserRequestBody(w, r, models.UserRequestParams{})
+
+	if !validUserRequestBody(w, params) {
+		return
+	}
 
 	passwordHashed, err := hashPassword(params.Password)
 
@@ -109,6 +133,10 @@ func (serverCfg *ServerConfig) LoginUser(w http.ResponseWriter, r *http.Request)
 
 	params := decodeUserRequestBody(w, r, models.UserRequestParams{})
 
+	if !validUserRequestBody(w, params) {
+		return
+	}
+
 	user, err := serverCfg.DB.GetUserViaEmail(r.Context(), params.Email)
 
 	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusBadRequest, "Invalid credentails.") {
@@ -122,8 +150,6 @@ func (serverCfg *ServerConfig) LoginUser(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-
-	log.Print("end?   ")
 
 	token, err := createJwtToken(map[string]interface{}{"id": user.ID, "email": user.Email})
 

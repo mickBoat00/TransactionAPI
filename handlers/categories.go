@@ -26,16 +26,21 @@ func decodeCategoryRequestBody(w http.ResponseWriter, r *http.Request, model mod
 	return params
 }
 
-func (serverCfg *ServerConfig) checkCategoriesPermissions(w http.ResponseWriter, r *http.Request, user_id uuid.UUID, category_uuid uuid.UUID) {
+func (serverCfg *ServerConfig) checkCategoriesPermissions(w http.ResponseWriter, r *http.Request, user_id uuid.UUID, category_uuid uuid.UUID) bool {
 
 	userCategoriesIds, err := serverCfg.DB.GetUserCategoryIds(r.Context(), user_id)
 
-	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
-
-	if !slices.Contains(userCategoriesIds, category_uuid) {
-		utils.IfErrorRespondWithErrorJson(w, "Permission Denied", http.StatusForbidden, "Permission Denied")
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
+		return false
 	}
 
+	if !slices.Contains(userCategoriesIds, category_uuid) {
+		if utils.IfErrorRespondWithErrorJson(w, "Permission Denied", http.StatusForbidden, "Permission Denied") {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ListCategories godoc
@@ -111,9 +116,13 @@ func (serverCfg *ServerConfig) UpdateCategory(w http.ResponseWriter, r *http.Req
 
 	category_uuid, err := uuid.Parse(category_id)
 
-	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
+	if utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err)) {
+		return
+	}
 
-	serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid)
+	if !serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid) {
+		return
+	}
 
 	params := decodeCategoryRequestBody(w, r, models.CategoryRequestParams{})
 
@@ -158,7 +167,9 @@ func (serverCfg *ServerConfig) DeleteCategory(w http.ResponseWriter, r *http.Req
 
 	utils.IfErrorRespondWithErrorJson(w, err, http.StatusInternalServerError, fmt.Sprintf("%s", err))
 
-	serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid)
+	if !serverCfg.checkCategoriesPermissions(w, r, user_id, category_uuid) {
+		return
+	}
 
 	db_err := serverCfg.DB.DeleteUserCategories(r.Context(), database.DeleteUserCategoriesParams{
 		ID:     category_uuid,

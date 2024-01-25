@@ -8,7 +8,7 @@ import (
 )
 
 type CategoryRequestParams struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required"`
 }
 
 type Category struct {
