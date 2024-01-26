@@ -17,6 +17,8 @@ definitions:
     properties:
       name:
         type: string
+    required:
+    - name
     type: object
   models.Currency:
     properties:
@@ -36,12 +38,45 @@ definitions:
       error:
         type: string
     type: object
+  models.TransactionRequestParams:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: string
+      currency_id:
+        type: string
+      date:
+        type: string
+    type: object
+  models.TransactionResponseParams:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: string
+      created_at:
+        type: string
+      currency_id:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   models.UserRequestParams:
     properties:
       email:
         type: string
       password:
+        minLength: 8
         type: string
+    required:
+    - email
     type: object
   models.UserResponseParams:
     properties:
@@ -266,6 +301,64 @@ paths:
       summary: Sign up
       tags:
       - Auth
+  /transactions/:
+    get:
+      consumes:
+      - application/json
+      description: get user transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TransactionResponseParams'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
+      summary: List transaction
+      tags:
+      - Transaction
+    post:
+      consumes:
+      - application/json
+      description: create by json Transaction
+      parameters:
+      - description: Add Transaction
+        in: body
+        name: Transaction
+        required: true
+        schema:
+          $ref: '#/definitions/models.TransactionRequestParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TransactionResponseParams'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorJsonParams'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a transaction
+      tags:
+      - Transaction
 securityDefinitions:
   ApiKeyAuth:
     in: header
