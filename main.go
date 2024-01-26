@@ -60,7 +60,7 @@ func main() {
 	v1Router := chi.NewRouter()
 
 	v1Router.Get("/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/docs/swagger.yaml"),
+		httpSwagger.URL("http://localhost:8000/docs/swagger.json"),
 	))
 	v1Router.Post("/signup/", serverCfg.CreateUser)
 	v1Router.Post("/login/", serverCfg.LoginUser)
@@ -71,6 +71,9 @@ func main() {
 	v1Router.Post("/categories/", handlers.AuthMiddleware(serverCfg.CreateCategory))
 	v1Router.Put("/categories/{id}/", handlers.AuthMiddleware(serverCfg.UpdateCategory))
 	v1Router.Delete("/categories/{id}/", handlers.AuthMiddleware(serverCfg.DeleteCategory))
+
+	v1Router.Get("/transactions/", handlers.AuthMiddleware(serverCfg.ListTransactions))
+	v1Router.Post("/transactions/", handlers.AuthMiddleware(serverCfg.CreateTransaction))
 
 	workDir, err := os.Getwd()
 	errorMessage(err)

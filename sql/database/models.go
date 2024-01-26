@@ -26,6 +26,17 @@ type Currency struct {
 	Updatedat time.Time
 }
 
+type Transaction struct {
+	ID         uuid.UUID
+	CurrencyID uuid.UUID
+	CategoryID uuid.UUID
+	Amount     string
+	Date       time.Time
+	UserID     uuid.UUID
+	Createdat  time.Time
+	Updatedat  time.Time
+}
+
 type User struct {
 	ID        uuid.UUID
 	Email     string
